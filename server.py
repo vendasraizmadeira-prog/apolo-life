@@ -4,7 +4,7 @@ Apolo Life - Sistema de Avaliação Física
 Backend: Python + Tornado + SQLite + JWT + pdfplumber
 """
 
-import os, json, re, sqlite3, hashlib, base64
+import os, json, re, sqlite3, hashlib, base64, asyncio
 from datetime import datetime, timedelta
 import tornado.web, tornado.ioloop, tornado.escape
 import bcrypt, jwt, pdfplumber
@@ -499,11 +499,15 @@ def make_app():
         }),
     ])
 
-if __name__ == '__main__':
+async def main():
     init_db()
     app = make_app()
     app.listen(PORT)
     print(f'\n🏋️  Apolo Life - Sistema de Avaliação Física')
     print(f'🌐 Acesse: http://localhost:{PORT}')
     print(f'👤 Admin: admin@apoloct.com / admin123\n')
-    tornado.ioloop.IOLoop.current().start()
+    await asyncio.Event().wait()
+
+if __name__ == '__main__':
+    import asyncio
+    asyncio.run(main())
