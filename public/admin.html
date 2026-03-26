@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apolo Life — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #080808;
+      --surface: #111111;
+      --surface2: #161616;
+      --surface3: #1c1c1c;
+      --border: #1f1f1f;
+      --border-light: #2a2a2a;
+      --text: #ffffff;
+      --text-muted: #888888;
+      --text-dim: #444444;
+      --accent: #ffffff;
+      --error: #ff4d4d;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --sidebar-w: 260px;
+    }
+
+    html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
+
+    /* ── Layout ── */
+    .layout { display: flex; height: 100vh; overflow: hidden; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .sidebar-logo {
+      padding: 28px 24px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: #fff;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo-icon svg { width: 20px; height: 20px; }
+
+    .logo-text { font-size: 16px; font-weight: 700; line-height: 1; }
+    .logo-by { font-size: 10px; color: var(--text-dim); font-weight: 400; letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+
+    .nav { padding: 16px 12px; flex: 1; overflow-y: auto; }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 8px 12px 6px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 9px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: all 0.15s;
+      margin-bottom: 2px;
+    }
+
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .nav-item.active { background: rgba(255,255,255,0.08); color: var(--text); }
+
+    .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    .sidebar-user {
+      padding: 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-avatar {
+      width: 36px; height: 36px;
+      background: var(--surface3);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .user-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-role { font-size: 11px; color: var(--text-dim); }
+
+    .logout-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--text-dim); padding: 6px;
+      border-radius: 6px; transition: color 0.15s;
+    }
+    .logout-btn:hover { color: var(--error); }
+
+    /* ── Main ── */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    .topbar {
+      padding: 20px 28px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .page-title { font-size: 18px; font-weight: 700; }
+    .page-sub { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+    .content { flex: 1; overflow-y: auto; padding: 28px; }
+
+    /* ── Cards / Stats ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+    }
+
+    .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-value { font-size: 32px; font-weight: 800; margin-top: 8px; letter-spacing: -1px; }
+    .stat-hint { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+    /* ── Sections ── */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ── Table ── */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .table-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .table-title { font-size: 15px; font-weight: 600; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left;
+      padding: 12px 20px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 14px 20px;
+      font-size: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .avatar-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar-sm {
+      width: 32px; height: 32px;
+      background: var(--surface3);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-green { background: rgba(34,197,94,0.1); color: var(--success); }
+    .badge-gray { background: rgba(255,255,255,0.06); color: var(--text-muted); }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+      text-decoration: none;
+    }
+
+    .btn-primary { background: #fff; color: #000; }
+    .btn-primary:hover { opacity: 0.9; }
+
+    .btn-ghost { background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); }
+
+    .btn-danger { background: rgba(255,77,77,0.12); color: var(--error); border: 1px solid rgba(255,77,77,0.2); }
+    .btn-danger:hover { background: rgba(255,77,77,0.2); }
+
+    .btn svg { width: 14px; height: 14px; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 85vh;
+      overflow-y: auto;
+      transform: translateY(16px);
+      transition: transform 0.2s;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+
+    .modal-header {
+      padding: 24px 24px 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+    .modal-title { font-size: 18px; font-weight: 700; }
+    .modal-sub { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+    .modal-close {
+      background: none; border: none; cursor: pointer;
+      color: var(--text-dim); font-size: 20px;
+      line-height: 1; padding: 4px;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    .modal-body { padding: 24px; }
+    .modal-footer {
+      padding: 0 24px 24px;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    /* ── Form ── */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-field { margin-bottom: 16px; }
+
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: rgba(255,255,255,0.25);
+    }
+    input::placeholder, textarea::placeholder { color: var(--text-dim); }
+
+    select option { background: #1a1a1a; }
+    textarea { resize: vertical; min-height: 80px; }
+
+    /* ── Upload zone ── */
+    .upload-zone {
+      border: 2px dashed var(--border-light);
+      border-radius: 12px;
+      padding: 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .upload-zone:hover, .upload-zone.drag { border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.03); }
+    .upload-zone svg { width: 32px; height: 32px; color: var(--text-dim); margin-bottom: 10px; }
+    .upload-zone-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .upload-zone-sub { font-size: 12px; color: var(--text-muted); }
+    .upload-zone input[type="file"] { display: none; }
+
+    .upload-success {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(34,197,94,0.08);
+      border: 1px solid rgba(34,197,94,0.2);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--success);
+      margin-top: 12px;
+      display: none;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 28px; right: 28px;
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 200;
+      display: flex; align-items: center; gap: 10px;
+      transform: translateY(20px);
+      opacity: 0;
+      transition: all 0.3s;
+      min-width: 240px;
+      max-width: 380px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: rgba(34,197,94,0.3); }
+    .toast.error { border-color: rgba(255,77,77,0.3); color: var(--error); }
+
+    /* ── Recent ── */
+    .recent-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .recent-item:last-child { border-bottom: none; }
+    .recent-name { font-size: 14px; font-weight: 600; }
+    .recent-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .recent-vals { margin-left: auto; text-align: right; }
+    .recent-weight { font-size: 16px; font-weight: 700; }
+    .recent-fat { font-size: 12px; color: var(--text-muted); }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--text-muted);
+    }
+    .empty-state svg { width: 40px; height: 40px; margin-bottom: 12px; opacity: 0.3; }
+    .empty-state-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .empty-state-sub { font-size: 13px; }
+
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(0,0,0,0.15);
+      border-top-color: #000;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .text-muted { color: var(--text-muted); }
+
+    /* Client view modal - assessments list */
+    .assess-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .assess-date { font-size: 13px; font-weight: 600; color: var(--text-muted); min-width: 80px; }
+    .assess-metrics { display: flex; gap: 20px; flex: 1; flex-wrap: wrap; }
+    .assess-metric { text-align: center; }
+    .assess-metric-val { font-size: 17px; font-weight: 700; }
+    .assess-metric-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+    .assess-actions { display: flex; gap: 8px; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 4px; width: fit-content; }
+    .tab { padding: 8px 18px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-muted); transition: all 0.15s; }
+    .tab.active { background: rgba(255,255,255,0.1); color: var(--text); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 36 36" fill="none">
+            <path d="M18 4L4 28H32L18 4Z" fill="black"/>
+            <circle cx="18" cy="20" r="4" fill="white"/>
+          </svg>
+        </div>
+        <div>
+          <div class="logo-text">Apolo Life</div>
+          <div class="logo-by">by Apolo CT</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <div class="nav-label">Menu</div>
+        <div class="nav-item active" data-section="overview" onclick="showSection('overview',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Visão Geral
+        </div>
+        <div class="nav-item" data-section="clients" onclick="showSection('clients',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Clientes
+        </div>
+        <div class="nav-item" data-section="upload" onclick="showSection('upload',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload PDF
+        </div>
+      </nav>
+
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebarAvatar">A</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebarName">Admin</div>
+          <div class="user-role">Administrador</div>
+        </div>
+        <button class="logout-btn" onclick="logout()" title="Sair">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <!-- Overview -->
+      <section class="section active" id="sec-overview">
+        <div class="topbar">
+          <div>
+            <div class="page-title">Visão Geral</div>
+            <div class="page-sub">Resumo do sistema</div>
+          </div>
+        </div>
+        <div class="content">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Total de Clientes</div>
+              <div class="stat-value" id="statClients">—</div>
+              <div class="stat-hint">cadastrados no sistema</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Avaliações</div>
+              <div class="stat-value" id="statAssessments">—</div>
+              <div class="stat-hint">realizadas no total</div>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <div class="table-header">
+              <div class="table-title">Avaliações Recentes</div>
+            </div>
+            <div id="recentList"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Clients -->
+      <section class="section" id="sec-clients">
+        <div class="topbar">
+          <div>
+            <div class="page-title">Clientes</div>
+            <div class="page-sub">Gerencie os alunos cadastrados</div>
+          </div>
+          <button class="btn btn-primary" onclick="openAddClient()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Novo Cliente
+          </button>
+        </div>
+        <div class="content">
+          <div class="table-wrap">
+            <div class="table-header">
+              <div class="table-title">Todos os Clientes</div>
+              <input type="text" id="searchInput" placeholder="Buscar..." style="width:200px;padding:8px 12px;font-size:13px;" oninput="filterClients()" />
+            </div>
+            <table id="clientsTable">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Email</th>
+                  <th>Avaliações</th>
+                  <th>Último acesso</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="clientsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Upload -->
+      <section class="section" id="sec-upload">
+        <div class="topbar">
+          <div>
+            <div class="page-title">Upload de PDF</div>
+            <div class="page-sub">Envie o PDF do AvanutriAvaBio-360 para um cliente</div>
+          </div>
+        </div>
+        <div class="content">
+          <div class="table-wrap" style="max-width:560px;padding:28px;border-radius:16px;">
+            <div class="form-field">
+              <label>Cliente</label>
+              <select id="uploadClientSelect">
+                <option value="">Selecione um cliente...</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Arquivo PDF</label>
+              <div class="upload-zone" id="uploadZone" onclick="document.getElementById('pdfFile').click()">
+                <input type="file" id="pdfFile" accept=".pdf" onchange="handleFileSelect(this)" />
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                <div class="upload-zone-title">Arraste o PDF aqui</div>
+                <div class="upload-zone-sub">ou clique para selecionar · PDF até 20MB</div>
+              </div>
+              <div class="upload-success" id="uploadSuccess">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span id="uploadSuccessName"></span>
+              </div>
+            </div>
+            <div class="form-field">
+              <label>Observações (opcional)</label>
+              <textarea id="uploadNotes" placeholder="Anotações sobre esta avaliação..."></textarea>
+            </div>
+            <button class="btn btn-primary" style="width:100%;padding:13px;font-size:14px;justify-content:center;" id="uploadBtn" onclick="submitUpload()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Processar e Salvar PDF
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Add/Edit Client Modal -->
+  <div class="modal-overlay" id="clientModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="clientModalTitle">Novo Cliente</div>
+          <div class="modal-sub">Preencha os dados do aluno</div>
+        </div>
+        <button class="modal-close" onclick="closeModal('clientModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editClientId" />
+        <div class="form-row">
+          <div class="form-field">
+            <label>Nome completo *</label>
+            <input type="text" id="clientName" placeholder="João Silva" />
+          </div>
+          <div class="form-field">
+            <label>Telefone</label>
+            <input type="text" id="clientPhone" placeholder="(11) 99999-9999" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label>Email *</label>
+            <input type="email" id="clientEmail" placeholder="joao@email.com" />
+          </div>
+          <div class="form-field">
+            <label>Data de nascimento</label>
+            <input type="date" id="clientBirth" />
+          </div>
+        </div>
+        <div class="form-field">
+          <label id="passLabel">Senha *</label>
+          <input type="password" id="clientPassword" placeholder="Mínimo 6 caracteres" />
+          <div style="font-size:11px;color:var(--text-dim);margin-top:4px;" id="passHint"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('clientModal')">Cancelar</button>
+        <button class="btn btn-primary" id="saveClientBtn" onclick="saveClient()">Criar Cliente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Client Assessments Modal -->
+  <div class="modal-overlay" id="assessModal">
+    <div class="modal" style="max-width:680px;">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="assessModalTitle">Avaliações</div>
+          <div class="modal-sub" id="assessModalSub"></div>
+        </div>
+        <button class="modal-close" onclick="closeModal('assessModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="assessList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API = '/api';
+    let clients = [];
+    let editingId = null;
+
+    function getToken() { return localStorage.getItem('apolo_token'); }
+
+    async function api(method, url, body, isForm) {
+      const opts = {
+        method,
+        headers: { Authorization: 'Bearer ' + getToken() }
+      };
+      if (body && !isForm) {
+        opts.headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(body);
+      } else if (isForm) {
+        opts.body = body;
+      }
+      const res = await fetch(API + url, opts);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro');
+      return data;
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────
+    (async () => {
+      const token = getToken();
+      const role = localStorage.getItem('apolo_role');
+      if (!token || role !== 'admin') { window.location.href = '/'; return; }
+
+      const name = localStorage.getItem('apolo_name') || 'Admin';
+      document.getElementById('sidebarName').textContent = name;
+      document.getElementById('sidebarAvatar').textContent = name.charAt(0).toUpperCase();
+
+      await loadStats();
+      await loadClients();
+    })();
+
+    async function loadStats() {
+      try {
+        const data = await api('GET', '/stats');
+        document.getElementById('statClients').textContent = data.totalClients;
+        document.getElementById('statAssessments').textContent = data.totalAssessments;
+
+        const list = document.getElementById('recentList');
+        if (!data.recentAssessments.length) {
+          list.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg><div class="empty-state-title">Nenhuma avaliação ainda</div><div class="empty-state-sub">Faça upload de um PDF para começar</div></div>`;
+        } else {
+          list.innerHTML = data.recentAssessments.map(a => `
+            <div class="recent-item">
+              <div class="avatar-sm">${a.name.charAt(0)}</div>
+              <div>
+                <div class="recent-name">${a.name}</div>
+                <div class="recent-meta">${a.assessment_date || '—'}</div>
+              </div>
+              <div class="recent-vals">
+                <div class="recent-weight">${a.weight ? a.weight + ' kg' : '—'}</div>
+                <div class="recent-fat">${a.body_fat_pct ? a.body_fat_pct + '% gordura' : ''}</div>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (e) { console.error(e); }
+    }
+
+    async function loadClients() {
+      try {
+        clients = await api('GET', '/clients');
+        renderClients(clients);
+
+        // Populate upload select
+        const sel = document.getElementById('uploadClientSelect');
+        sel.innerHTML = '<option value="">Selecione um cliente...</option>' +
+          clients.map(c => `<option value="${c.id}">${c.name} — ${c.email}</option>`).join('');
+      } catch (e) { console.error(e); }
+    }
+
+    function renderClients(list) {
+      const tbody = document.getElementById('clientsBody');
+      if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state" style="padding:32px"><div class="empty-state-title">Nenhum cliente cadastrado</div><div class="empty-state-sub">Clique em "Novo Cliente" para começar</div></div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = list.map(c => `
+        <tr>
+          <td>
+            <div class="avatar-cell">
+              <div class="avatar-sm">${c.name.charAt(0)}</div>
+              <span>${c.name}</span>
+            </div>
+          </td>
+          <td class="text-muted">${c.email}</td>
+          <td><span class="badge ${c.assessment_count > 0 ? 'badge-green' : 'badge-gray'}">${c.assessment_count} avaliação${c.assessment_count !== 1 ? 'ões' : ''}</span></td>
+          <td class="text-muted">${c.last_login ? new Date(c.last_login).toLocaleDateString('pt-BR') : 'Nunca'}</td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-ghost" style="padding:6px 10px;font-size:12px;" onclick="viewAssessments(${c.id},'${c.name}')">Avaliações</button>
+              <button class="btn btn-ghost" style="padding:6px 10px;font-size:12px;" onclick="editClient(${c.id})">Editar</button>
+              <button class="btn btn-danger" style="padding:6px 10px;font-size:12px;" onclick="deleteClient(${c.id},'${c.name}')">Excluir</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function filterClients() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      renderClients(clients.filter(c => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q)));
+    }
+
+    // ── Modals ────────────────────────────────────────────────────────────
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+    function openAddClient() {
+      editingId = null;
+      document.getElementById('clientModalTitle').textContent = 'Novo Cliente';
+      document.getElementById('saveClientBtn').textContent = 'Criar Cliente';
+      document.getElementById('passLabel').textContent = 'Senha *';
+      document.getElementById('passHint').textContent = '';
+      document.getElementById('editClientId').value = '';
+      ['clientName','clientEmail','clientPhone','clientPassword'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('clientBirth').value = '';
+      openModal('clientModal');
+    }
+
+    function editClient(id) {
+      editingId = id;
+      const c = clients.find(x => x.id === id);
+      if (!c) return;
+      document.getElementById('clientModalTitle').textContent = 'Editar Cliente';
+      document.getElementById('saveClientBtn').textContent = 'Salvar Alterações';
+      document.getElementById('passLabel').textContent = 'Nova Senha (deixe em branco para manter)';
+      document.getElementById('passHint').textContent = 'Preencha apenas para alterar a senha atual';
+      document.getElementById('editClientId').value = id;
+      document.getElementById('clientName').value = c.name;
+      document.getElementById('clientEmail').value = c.email;
+      document.getElementById('clientPhone').value = c.phone || '';
+      document.getElementById('clientBirth').value = c.birth_date || '';
+      document.getElementById('clientPassword').value = '';
+      openModal('clientModal');
+    }
+
+    async function saveClient() {
+      const name = document.getElementById('clientName').value.trim();
+      const email = document.getElementById('clientEmail').value.trim();
+      const phone = document.getElementById('clientPhone').value.trim();
+      const birth_date = document.getElementById('clientBirth').value;
+      const password = document.getElementById('clientPassword').value;
+
+      if (!name || !email) return showToast('Nome e email são obrigatórios', 'error');
+      if (!editingId && !password) return showToast('Senha é obrigatória para novo cliente', 'error');
+
+      try {
+        if (editingId) {
+          await api('PUT', `/clients/${editingId}`, { name, email, phone, birth_date, password: password || undefined });
+          showToast('Cliente atualizado com sucesso!', 'success');
+        } else {
+          await api('POST', '/clients', { name, email, password, phone, birth_date });
+          showToast('Cliente criado com sucesso!', 'success');
+        }
+        closeModal('clientModal');
+        loadClients();
+        loadStats();
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    async function deleteClient(id, name) {
+      if (!confirm(`Excluir "${name}"? Todas as avaliações serão removidas.`)) return;
+      try {
+        await api('DELETE', `/clients/${id}`);
+        showToast('Cliente removido', 'success');
+        loadClients();
+        loadStats();
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    async function viewAssessments(clientId, clientName) {
+      document.getElementById('assessModalTitle').textContent = clientName;
+      document.getElementById('assessModalSub').textContent = 'Histórico de avaliações';
+      const list = document.getElementById('assessList');
+      list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted)">Carregando...</div>';
+      openModal('assessModal');
+
+      try {
+        const assessments = await api('GET', `/clients/${clientId}/assessments`);
+        if (!assessments.length) {
+          list.innerHTML = `<div class="empty-state"><div class="empty-state-title">Nenhuma avaliação</div><div class="empty-state-sub">Faça upload de um PDF para este cliente</div></div>`;
+          return;
+        }
+        list.innerHTML = assessments.map(a => `
+          <div class="assess-item">
+            <div class="assess-date">${a.assessment_date || 'Sem data'}</div>
+            <div class="assess-metrics">
+              ${a.weight ? `<div class="assess-metric"><div class="assess-metric-val">${a.weight}kg</div><div class="assess-metric-lbl">Peso</div></div>` : ''}
+              ${a.body_fat_pct ? `<div class="assess-metric"><div class="assess-metric-val">${a.body_fat_pct}%</div><div class="assess-metric-lbl">Gordura</div></div>` : ''}
+              ${a.lean_mass ? `<div class="assess-metric"><div class="assess-metric-val">${a.lean_mass}kg</div><div class="assess-metric-lbl">Massa Magra</div></div>` : ''}
+              ${a.bmi ? `<div class="assess-metric"><div class="assess-metric-val">${a.bmi}</div><div class="assess-metric-lbl">IMC</div></div>` : ''}
+              ${a.visceral_fat ? `<div class="assess-metric"><div class="assess-metric-val">${a.visceral_fat}</div><div class="assess-metric-lbl">Gordura Visc.</div></div>` : ''}
+            </div>
+            <div class="assess-actions">
+              <button class="btn btn-danger" style="padding:6px 10px;font-size:12px;" onclick="deleteAssessment(${a.id},${clientId},'${clientName}')">Excluir</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        list.innerHTML = `<div style="color:var(--error);padding:16px">${e.message}</div>`;
+      }
+    }
+
+    async function deleteAssessment(id, clientId, clientName) {
+      if (!confirm('Excluir esta avaliação?')) return;
+      try {
+        await api('DELETE', `/assessments/${id}`);
+        showToast('Avaliação removida', 'success');
+        viewAssessments(clientId, clientName);
+        loadStats();
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    // ── Upload ────────────────────────────────────────────────────────────
+    let selectedFile = null;
+
+    function handleFileSelect(input) {
+      const file = input.files[0];
+      if (!file) return;
+      selectedFile = file;
+      document.getElementById('uploadSuccessName').textContent = file.name;
+      document.getElementById('uploadSuccess').style.display = 'flex';
+      document.getElementById('uploadZone').querySelector('.upload-zone-title').textContent = 'PDF selecionado';
+    }
+
+    // Drag & drop
+    const zone = document.getElementById('uploadZone');
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type === 'application/pdf') {
+        selectedFile = file;
+        document.getElementById('uploadSuccessName').textContent = file.name;
+        document.getElementById('uploadSuccess').style.display = 'flex';
+      }
+    });
+
+    async function submitUpload() {
+      const clientId = document.getElementById('uploadClientSelect').value;
+      if (!clientId) return showToast('Selecione um cliente', 'error');
+      if (!selectedFile) return showToast('Selecione um arquivo PDF', 'error');
+
+      const btn = document.getElementById('uploadBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner" style="border-top-color:#000"></span> Processando...';
+
+      try {
+        const form = new FormData();
+        form.append('pdf', selectedFile);
+        form.append('notes', document.getElementById('uploadNotes').value);
+        const result = await api('POST', `/clients/${clientId}/assessments/pdf`, form, true);
+        showToast('PDF processado com sucesso!', 'success');
+        selectedFile = null;
+        document.getElementById('pdfFile').value = '';
+        document.getElementById('uploadSuccess').style.display = 'none';
+        document.getElementById('uploadNotes').value = '';
+        loadStats();
+      } catch (e) {
+        showToast('Erro: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Processar e Salvar PDF';
+      }
+    }
+
+    // ── Navigation ────────────────────────────────────────────────────────
+    function showSection(name, el) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('sec-' + name).classList.add('active');
+      el.classList.add('active');
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = '/';
+    }
+
+    // ── Toast ─────────────────────────────────────────────────────────────
+    let toastTimer;
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.className = 'toast ' + type;
+      t.innerHTML = (type === 'success'
+        ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>'
+        : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+      ) + msg;
+      t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+    }
+
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', e => {
+        if (e.target === overlay) overlay.classList.remove('open');
+      });
+    });
+  </script>
+</body>
+</html>

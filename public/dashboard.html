@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apolo Life — Minha Avaliação</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #080808;
+      --surface: #111111;
+      --surface2: #161616;
+      --surface3: #1d1d1d;
+      --border: #1f1f1f;
+      --border-light: #2c2c2c;
+      --text: #ffffff;
+      --text-muted: #888888;
+      --text-dim: #444444;
+      --accent: #ffffff;
+    }
+
+    html, body { min-height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app { position: relative; z-index: 1; min-height: 100vh; }
+
+    /* ── Header ── */
+    .header {
+      background: rgba(8,8,8,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 50;
+      padding: 0 28px;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .header-logo { display: flex; align-items: center; gap: 10px; }
+    .header-logo-icon {
+      width: 32px; height: 32px;
+      background: #fff; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .header-logo-icon svg { width: 18px; height: 18px; }
+    .header-logo-name { font-size: 16px; font-weight: 700; }
+    .header-logo-by { font-size: 10px; color: var(--text-dim); font-weight: 400; }
+
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .header-user { display: flex; align-items: center; gap: 10px; }
+    .header-avatar {
+      width: 34px; height: 34px;
+      background: var(--surface2);
+      border: 1px solid var(--border-light);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 600;
+    }
+    .header-name { font-size: 14px; font-weight: 600; }
+    .header-sub { font-size: 11px; color: var(--text-dim); }
+
+    .btn-logout {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: 1px solid var(--border); border-radius: 8px;
+      padding: 7px 12px; color: var(--text-muted); font-size: 13px;
+      font-family: 'Inter', sans-serif; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-logout:hover { color: var(--text); border-color: var(--border-light); }
+    .btn-logout svg { width: 13px; height: 13px; }
+
+    /* ── Main ── */
+    .main { max-width: 1100px; margin: 0 auto; padding: 32px 24px 64px; }
+
+    /* ── Assessment selector ── */
+    .assess-selector {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+    .assess-selector-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+    .assess-tab {
+      padding: 8px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; color: var(--text-muted);
+      transition: all 0.15s;
+    }
+    .assess-tab.active { background: rgba(255,255,255,0.1); color: var(--text); border-color: var(--border-light); }
+    .assess-tab:hover { color: var(--text); }
+
+    /* ── Welcome banner ── */
+    .welcome {
+      background: linear-gradient(135deg, var(--surface) 0%, #181818 100%);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 24px;
+      display: flex; align-items: center; gap: 24px;
+    }
+
+    .welcome-avatar {
+      width: 64px; height: 64px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border-light);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .welcome-name { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
+    .welcome-meta { font-size: 14px; color: var(--text-muted); margin-top: 4px; }
+    .welcome-date { font-size: 12px; color: var(--text-dim); margin-top: 8px; }
+
+    .welcome-badges { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+    .welcome-badge {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 12px; color: var(--text-muted);
+    }
+
+    /* ── Metrics grid ── */
+    .section-label {
+      font-size: 11px; font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 14px;
+      margin-top: 28px;
+    }
+
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; margin-bottom: 8px; }
+
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      transition: border-color 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .metric-card:hover { border-color: var(--border-light); }
+
+    .metric-icon {
+      width: 32px; height: 32px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 14px;
+    }
+    .metric-icon svg { width: 16px; height: 16px; }
+
+    .metric-val { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; line-height: 1; }
+    .metric-unit { font-size: 13px; font-weight: 400; color: var(--text-muted); margin-left: 2px; }
+    .metric-label { font-size: 12px; color: var(--text-muted); margin-top: 6px; font-weight: 500; }
+
+    .metric-bar {
+      margin-top: 12px;
+      height: 3px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .metric-bar-fill { height: 100%; border-radius: 2px; background: #fff; transition: width 1s ease; }
+
+    .metric-status { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 6px; }
+    .metric-status.normal { color: #22c55e; }
+    .metric-status.above { color: #f59e0b; }
+    .metric-status.below { color: #888; }
+
+    /* ── Segmental body ── */
+    .body-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .body-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+    }
+
+    .body-card-title { font-size: 14px; font-weight: 700; margin-bottom: 18px; }
+
+    .body-segment { margin-bottom: 14px; }
+    .body-segment-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .body-segment-name { font-size: 13px; color: var(--text-muted); }
+    .body-segment-val { font-size: 14px; font-weight: 700; }
+    .body-segment-bar { height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
+    .body-segment-fill { height: 100%; border-radius: 2px; background: #fff; transition: width 1s ease; }
+
+    /* ── Charts ── */
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+    }
+    .chart-card.wide { grid-column: 1 / -1; }
+    .chart-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .chart-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; }
+    .chart-wrap { position: relative; height: 220px; }
+
+    /* ── No data ── */
+    .no-data {
+      text-align: center;
+      padding: 80px 24px;
+    }
+    .no-data-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+    .no-data-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .no-data-sub { font-size: 14px; color: var(--text-muted); }
+
+    /* ── Notes ── */
+    .notes-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+    }
+    .notes-text { font-size: 14px; line-height: 1.7; color: var(--text-muted); }
+
+    /* ── Modal (password) ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+      z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border-light);
+      border-radius: 20px; width: 100%; max-width: 400px;
+      transform: translateY(16px); transition: transform 0.2s;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-header { padding: 24px 24px 0; display: flex; align-items: flex-start; justify-content: space-between; }
+    .modal-title { font-size: 18px; font-weight: 700; }
+    .modal-close { background: none; border: none; cursor: pointer; color: var(--text-dim); font-size: 20px; }
+    .modal-close:hover { color: var(--text); }
+    .modal-body { padding: 20px 24px; }
+    .modal-footer { padding: 0 24px 24px; display: flex; gap: 10px; justify-content: flex-end; }
+
+    .form-field { margin-bottom: 16px; }
+    label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+    input[type="password"] {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 9px; padding: 11px 14px; font-size: 14px;
+      font-family: 'Inter', sans-serif; color: var(--text); outline: none;
+    }
+    input[type="password"]:focus { border-color: rgba(255,255,255,0.25); }
+
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: 'Inter', sans-serif; cursor: pointer; border: none; transition: all 0.15s; }
+    .btn-primary { background: #fff; color: #000; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-ghost { background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 28px; right: 28px;
+      background: var(--surface); border: 1px solid var(--border-light);
+      border-radius: 12px; padding: 14px 18px;
+      font-size: 14px; font-weight: 500;
+      z-index: 200; display: flex; align-items: center; gap: 10px;
+      transform: translateY(20px); opacity: 0; transition: all 0.3s;
+      min-width: 220px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.error { color: #ff4d4d; border-color: rgba(255,77,77,0.3); }
+
+    @media (max-width: 640px) {
+      .body-grid, .charts-grid { grid-template-columns: 1fr; }
+      .chart-card.wide { grid-column: auto; }
+      .welcome { flex-direction: column; align-items: flex-start; }
+      .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-logo">
+        <div class="header-logo-icon">
+          <svg viewBox="0 0 36 36" fill="none">
+            <path d="M18 4L4 28H32L18 4Z" fill="black"/>
+            <circle cx="18" cy="20" r="4" fill="white"/>
+          </svg>
+        </div>
+        <div>
+          <div class="header-logo-name">Apolo Life</div>
+          <div class="header-logo-by">by Apolo CT</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="header-user">
+          <div class="header-avatar" id="headerAvatar">?</div>
+          <div>
+            <div class="header-name" id="headerName">Carregando...</div>
+            <div class="header-sub">Meu perfil</div>
+          </div>
+        </div>
+        <button class="btn-logout" onclick="openPwdModal()" title="Alterar senha">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Senha
+        </button>
+        <button class="btn-logout" onclick="logout()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sair
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main" id="mainContent">
+      <div style="text-align:center;padding:80px;color:var(--text-muted)">Carregando avaliações...</div>
+    </main>
+  </div>
+
+  <!-- Change Password Modal -->
+  <div class="modal-overlay" id="pwdModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Alterar Senha</div>
+        <button class="modal-close" onclick="closeModal('pwdModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-field">
+          <label>Senha atual</label>
+          <input type="password" id="pwdCurrent" placeholder="Sua senha atual" />
+        </div>
+        <div class="form-field">
+          <label>Nova senha</label>
+          <input type="password" id="pwdNew" placeholder="Mínimo 6 caracteres" />
+        </div>
+        <div class="form-field">
+          <label>Confirmar nova senha</label>
+          <input type="password" id="pwdConfirm" placeholder="Repita a nova senha" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('pwdModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="changePassword()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API = '/api';
+    let assessments = [];
+    let currentIndex = 0;
+    let charts = {};
+
+    function getToken() { return localStorage.getItem('apolo_token'); }
+
+    async function api(method, url, body) {
+      const opts = { method, headers: { Authorization: 'Bearer ' + getToken() } };
+      if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+      const res = await fetch(API + url, opts);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro');
+      return data;
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────
+    (async () => {
+      const token = getToken();
+      if (!token) { window.location.href = '/'; return; }
+
+      const role = localStorage.getItem('apolo_role');
+      if (role === 'admin') { window.location.href = '/admin.html'; return; }
+
+      const name = localStorage.getItem('apolo_name') || 'Usuário';
+      const clientId = localStorage.getItem('apolo_id');
+      document.getElementById('headerName').textContent = name;
+      document.getElementById('headerAvatar').textContent = name.charAt(0).toUpperCase();
+
+      try {
+        assessments = await api('GET', `/clients/${clientId}/assessments`);
+        if (!assessments.length) {
+          renderNoData(name);
+        } else {
+          currentIndex = 0;
+          renderDashboard(name);
+        }
+      } catch (e) {
+        if (e.message.includes('Token')) { logout(); }
+      }
+    })();
+
+    function renderNoData(name) {
+      document.getElementById('mainContent').innerHTML = `
+        <div class="no-data">
+          <div class="no-data-icon">📊</div>
+          <div class="no-data-title">Nenhuma avaliação disponível</div>
+          <div class="no-data-sub">Seu personal trainer ainda não adicionou sua avaliação física.<br>Entre em contato com a equipe Apolo CT.</div>
+        </div>
+      `;
+    }
+
+    function renderDashboard(name) {
+      const a = assessments[currentIndex];
+      const main = document.getElementById('mainContent');
+
+      // Compute BMI status
+      function getBMIStatus(bmi) {
+        if (!bmi) return '';
+        if (bmi < 18.5) return 'Abaixo do peso';
+        if (bmi < 25) return 'Normal';
+        if (bmi < 30) return 'Sobrepeso';
+        return 'Obesidade';
+      }
+
+      function getBMIClass(bmi) {
+        if (!bmi) return '';
+        if (bmi < 18.5) return 'below';
+        if (bmi < 25) return 'normal';
+        return 'above';
+      }
+
+      function getFatStatus(pct, sex) {
+        if (!pct) return '';
+        const isMale = sex === 'Masculino';
+        if (isMale) {
+          if (pct < 6) return ['below', 'Essencial'];
+          if (pct < 14) return ['normal', 'Atlético'];
+          if (pct < 18) return ['normal', 'Boa forma'];
+          if (pct < 25) return ['normal', 'Aceitável'];
+          return ['above', 'Acima'];
+        } else {
+          if (pct < 14) return ['below', 'Essencial'];
+          if (pct < 21) return ['normal', 'Atlético'];
+          if (pct < 25) return ['normal', 'Boa forma'];
+          if (pct < 32) return ['normal', 'Aceitável'];
+          return ['above', 'Acima'];
+        }
+      }
+
+      // Assessment selector
+      let selectorHtml = '';
+      if (assessments.length > 1) {
+        selectorHtml = `
+          <div class="assess-selector">
+            <span class="assess-selector-label">Avaliação:</span>
+            ${assessments.map((as, i) => `
+              <div class="assess-tab ${i === currentIndex ? 'active' : ''}" onclick="switchAssessment(${i})">${as.assessment_date || '#' + (i+1)}</div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      const fatStatus = getFatStatus(a.body_fat_pct, a.sex);
+      const viscClass = a.visceral_fat ? (a.visceral_fat >= 10 ? 'above' : 'normal') : '';
+
+      // Progress bars (0-100% relative to reasonable maxes)
+      const bmiPct = a.bmi ? Math.min((a.bmi / 40) * 100, 100) : 0;
+      const fatPct = a.body_fat_pct ? Math.min((a.body_fat_pct / 45) * 100, 100) : 0;
+      const muscPct = a.skeletal_muscle ? Math.min((a.skeletal_muscle / 60) * 100, 100) : 0;
+
+      // Segmental max for bars
+      const leanParts = [a.lean_arm_right, a.lean_arm_left, a.lean_trunk, a.lean_leg_right, a.lean_leg_left].filter(Boolean);
+      const maxLean = leanParts.length ? Math.max(...leanParts) : 1;
+      const fatParts = [a.fat_arm_right, a.fat_arm_left, a.fat_trunk, a.fat_leg_right, a.fat_leg_left].filter(Boolean);
+      const maxFat = fatParts.length ? Math.max(...fatParts) : 1;
+
+      const fmt = (v, dec=1) => v != null ? parseFloat(v).toFixed(dec) : '—';
+
+      main.innerHTML = selectorHtml + `
+
+        <!-- Welcome -->
+        <div class="welcome">
+          <div class="welcome-avatar">${name.charAt(0).toUpperCase()}</div>
+          <div>
+            <div class="welcome-name">${a.name || name}</div>
+            <div class="welcome-meta">${a.sex || ''} ${a.age ? '· ' + a.age + ' anos' : ''} ${a.height ? '· ' + a.height + 'm' : ''}</div>
+            <div class="welcome-date">Avaliação em ${a.assessment_date || 'Data não informada'}</div>
+            <div class="welcome-badges">
+              ${a.bmr ? `<div class="welcome-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>TMB: ${a.bmr} kcal/dia</div>` : ''}
+              ${a.metabolic_age ? `<div class="welcome-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Idade metabólica: ${a.metabolic_age} anos</div>` : ''}
+              ${a.appendicular_index ? `<div class="welcome-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Índice apendicular: ${fmt(a.appendicular_index)} kg/m²</div>` : ''}
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Metrics -->
+        <div class="section-label">Composição Corporal</div>
+        <div class="metrics-grid" id="metricsGrid">
+          ${a.weight != null ? `
+          <div class="metric-card">
+            <div class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3C8.5 3 5 6.5 5 10c0 5.25 7 13 7 13s7-7.75 7-13c0-3.5-3.5-7-7-7z"/></svg></div>
+            <div class="metric-val">${fmt(a.weight)}<span class="metric-unit">kg</span></div>
+            <div class="metric-label">Peso Corporal</div>
+          </div>` : ''}
+
+          ${a.body_fat_pct != null ? `
+          <div class="metric-card">
+            <div class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></div>
+            <div class="metric-val">${fmt(a.body_fat_pct)}<span class="metric-unit">%</span></div>
+            <div class="metric-label">Percentual de Gordura</div>
+            <div class="metric-bar"><div class="metric-bar-fill" style="width:${fatPct}%"></div></div>
+            ${fatStatus ? `<div class="metric-status ${fatStatus[0]}">${fatStatus[1]}</div>` : ''}
+          </div>` : ''}
+
+          ${a.lean_mass != null ? `
+          <div class="metric-card">
+            <div class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="4" y1="20" x2="20" y2="20"/></svg></div>
+            <div class="metric-val">${fmt(a.lean_mass)}<span class="metric-unit">kg</span></div>
+            <div class="metric-label">Massa Livre de Gordura</div>
+          </div>` : ''}
+
+          ${a.fat_mass != null ? `
+          <div class="metric-card">
+            <div class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg></div>
+            <div class="metric-val">${fmt(a.fat_mass)}<span class="metric-unit">kg</span></div>
+            <div class="metric-label">Massa de Gordura</div>
+          </div>` : ''}
+
+          ${a.skeletal_muscle != null ? `
+          <div class="metric-card">
+            <div class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>
+            <div class="metric-val">${fmt(a.skeletal_muscle)}<span class="metric-unit">kg</span></div>
+            <div class="metric-label">Massa Muscular Esquelética</div>
+            <div class="metric-bar"><div class="metric-bar-fill" style="width:${muscPct}%"></div></div>
+          </div>` : ''}
+
+          ${a.bmi != null ? `
+          <div class="metric-card">
+            <div class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+            <div class="metric-val">${fmt(a.bmi)}</div>
+            <div class="metric-label">IMC</div>
+            <div class="metric-bar"><div class="metric-bar-fill" style="width:${bmiPct}%"></div></div>
+            <div class="metric-status ${getBMIClass(a.bmi)}">${getBMIStatus(a.bmi)}</div>
+          </div>` : ''}
+
+          ${a.body_water != null ? `
+          <div class="metric-card">
+            <div class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg></div>
+            <div class="metric-val">${fmt(a.body_water)}<span class="metric-unit">L</span></div>
+            <div class="metric-label">Água Corporal Total</div>
+          </div>` : ''}
+
+          ${a.visceral_fat != null ? `
+          <div class="metric-card">
+            <div class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+            <div class="metric-val">${a.visceral_fat}</div>
+            <div class="metric-label">Gordura Visceral (nível)</div>
+            <div class="metric-status ${viscClass}">${a.visceral_fat < 10 ? 'Normal' : 'Atenção'}</div>
+          </div>` : ''}
+        </div>
+
+        <!-- Segmental Analysis -->
+        ${(a.lean_arm_right || a.fat_trunk) ? `
+        <div class="section-label">Análise Segmentar</div>
+        <div class="body-grid">
+          <div class="body-card">
+            <div class="body-card-title">💪 Distribuição de Massa Magra</div>
+            ${a.lean_arm_right != null ? `<div class="body-segment"><div class="body-segment-row"><span class="body-segment-name">Braço Direito</span><span class="body-segment-val">${fmt(a.lean_arm_right)} kg</span></div><div class="body-segment-bar"><div class="body-segment-fill" style="width:${(a.lean_arm_right/maxLean*100).toFixed(0)}%"></div></div></div>` : ''}
+            ${a.lean_arm_left != null ? `<div class="body-segment"><div class="body-segment-row"><span class="body-segment-name">Braço Esquerdo</span><span class="body-segment-val">${fmt(a.lean_arm_left)} kg</span></div><div class="body-segment-bar"><div class="body-segment-fill" style="width:${(a.lean_arm_left/maxLean*100).toFixed(0)}%"></div></div></div>` : ''}
+            ${a.lean_trunk != null ? `<div class="body-segment"><div class="body-segment-row"><span class="body-segment-name">Tronco</span><span class="body-segment-val">${fmt(a.lean_trunk)} kg</span></div><div class="body-segment-bar"><div class="body-segment-fill" style="width:${(a.lean_trunk/maxLean*100).toFixed(0)}%"></div></div></div>` : ''}
+            ${a.lean_leg_right != null ? `<div class="body-segment"><div class="body-segment-row"><span class="body-segment-name">Perna Direita</span><span class="body-segment-val">${fmt(a.lean_leg_right)} kg</span></div><div class="body-segment-bar"><div class="body-segment-fill" style="width:${(a.lean_leg_right/maxLean*100).toFixed(0)}%"></div></div></div>` : ''}
+            ${a.lean_leg_left != null ? `<div class="body-segment"><div class="body-segment-row"><span class="body-segment-name">Perna Esquerda</span><span class="body-segment-val">${fmt(a.lean_leg_left)} kg</span></div><div class="body-segment-bar"><div class="body-segment-fill" style="width:${(a.lean_leg_left/maxLean*100).toFixed(0)}%"></div></div></div>` : ''}
+          </div>
+
+          <div class="body-card">
+            <div class="body-card-title">🫧 Distribuição de Gordura</div>
+            ${a.fat_arm_right != null ? `<div class="body-segment"><div class="body-segment-row"><span class="body-segment-name">Braço Direito</span><span class="body-segment-val">${fmt(a.fat_arm_right)} kg</span></div><div class="body-segment-bar"><div class="body-segment-fill" style="width:${(a.fat_arm_right/maxFat*100).toFixed(0)}%"></div></div></div>` : ''}
+            ${a.fat_arm_left != null ? `<div class="body-segment"><div class="body-segment-row"><span class="body-segment-name">Braço Esquerdo</span><span class="body-segment-val">${fmt(a.fat_arm_left)} kg</span></div><div class="body-segment-bar"><div class="body-segment-fill" style="width:${(a.fat_arm_left/maxFat*100).toFixed(0)}%"></div></div></div>` : ''}
+            ${a.fat_trunk != null ? `<div class="body-segment"><div class="body-segment-row"><span class="body-segment-name">Tronco</span><span class="body-segment-val">${fmt(a.fat_trunk)} kg</span></div><div class="body-segment-bar"><div class="body-segment-fill" style="width:${(a.fat_trunk/maxFat*100).toFixed(0)}%"></div></div></div>` : ''}
+            ${a.fat_leg_right != null ? `<div class="body-segment"><div class="body-segment-row"><span class="body-segment-name">Perna Direita</span><span class="body-segment-val">${fmt(a.fat_leg_right)} kg</span></div><div class="body-segment-bar"><div class="body-segment-fill" style="width:${(a.fat_leg_right/maxFat*100).toFixed(0)}%"></div></div></div>` : ''}
+            ${a.fat_leg_left != null ? `<div class="body-segment"><div class="body-segment-row"><span class="body-segment-name">Perna Esquerda</span><span class="body-segment-val">${fmt(a.fat_leg_left)} kg</span></div><div class="body-segment-bar"><div class="body-segment-fill" style="width:${(a.fat_leg_left/maxFat*100).toFixed(0)}%"></div></div></div>` : ''}
+          </div>
+        </div>` : ''}
+
+        <!-- Charts (only if >1 assessment) -->
+        ${assessments.length > 1 ? `
+        <div class="section-label">Evolução</div>
+        <div class="charts-grid">
+          <div class="chart-card wide">
+            <div class="chart-title">Peso Corporal</div>
+            <div class="chart-sub">Evolução ao longo das avaliações</div>
+            <div class="chart-wrap"><canvas id="chartWeight"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">% de Gordura</div>
+            <div class="chart-sub">Evolução da gordura corporal</div>
+            <div class="chart-wrap"><canvas id="chartFat"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Massa Muscular Esquelética</div>
+            <div class="chart-sub">Ganho de músculo</div>
+            <div class="chart-wrap"><canvas id="chartMuscle"></canvas></div>
+          </div>
+        </div>` : ''}
+
+        <!-- Notes -->
+        ${a.notes ? `
+        <div class="section-label">Observações do Avaliador</div>
+        <div class="notes-card">
+          <div class="notes-text">${a.notes.replace(/\n/g, '<br>')}</div>
+        </div>` : ''}
+
+        <!-- Hydration & Body Composition breakdown -->
+        ${(a.intra_water || a.protein || a.minerals) ? `
+        <div class="section-label">Detalhamento Corporal</div>
+        <div class="metrics-grid">
+          ${a.intra_water != null ? `<div class="metric-card"><div class="metric-val">${fmt(a.intra_water)}<span class="metric-unit">L</span></div><div class="metric-label">Água Intracelular</div></div>` : ''}
+          ${a.extra_water != null ? `<div class="metric-card"><div class="metric-val">${fmt(a.extra_water)}<span class="metric-unit">L</span></div><div class="metric-label">Água Extracelular</div></div>` : ''}
+          ${a.protein != null ? `<div class="metric-card"><div class="metric-val">${fmt(a.protein)}<span class="metric-unit">kg</span></div><div class="metric-label">Proteínas</div></div>` : ''}
+          ${a.minerals != null ? `<div class="metric-card"><div class="metric-val">${fmt(a.minerals)}<span class="metric-unit">kg</span></div><div class="metric-label">Minerais</div></div>` : ''}
+        </div>` : ''}
+
+      `;
+
+      // Render charts if >1 assessment
+      if (assessments.length > 1) {
+        setTimeout(() => renderCharts(), 100);
+      }
+    }
+
+    function switchAssessment(index) {
+      currentIndex = index;
+      // Destroy existing charts
+      Object.values(charts).forEach(c => c.destroy());
+      charts = {};
+      renderDashboard(localStorage.getItem('apolo_name'));
+    }
+
+    function renderCharts() {
+      const sorted = [...assessments].reverse(); // oldest first
+      const labels = sorted.map(a => a.assessment_date || '—');
+      const chartDefaults = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#666', font: { size: 11, family: 'Inter' } } },
+          y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#666', font: { size: 11, family: 'Inter' } } }
+        }
+      };
+
+      const lineDataset = (data, color='#fff') => ({
+        data,
+        borderColor: color,
+        backgroundColor: color.replace(')', ',0.08)').replace('rgb', 'rgba'),
+        borderWidth: 2,
+        pointBackgroundColor: color,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        tension: 0.3,
+        fill: true
+      });
+
+      if (document.getElementById('chartWeight')) {
+        charts.weight = new Chart(document.getElementById('chartWeight'), {
+          type: 'line',
+          data: { labels, datasets: [lineDataset(sorted.map(a => a.weight))] },
+          options: { ...chartDefaults, plugins: { ...chartDefaults.plugins, tooltip: { callbacks: { label: ctx => ctx.parsed.y + ' kg' } } } }
+        });
+      }
+
+      if (document.getElementById('chartFat')) {
+        charts.fat = new Chart(document.getElementById('chartFat'), {
+          type: 'line',
+          data: { labels, datasets: [lineDataset(sorted.map(a => a.body_fat_pct), 'rgb(248,113,113)')] },
+          options: { ...chartDefaults, plugins: { ...chartDefaults.plugins, tooltip: { callbacks: { label: ctx => ctx.parsed.y + '%' } } } }
+        });
+      }
+
+      if (document.getElementById('chartMuscle')) {
+        charts.muscle = new Chart(document.getElementById('chartMuscle'), {
+          type: 'line',
+          data: { labels, datasets: [lineDataset(sorted.map(a => a.skeletal_muscle), 'rgb(134,239,172)')] },
+          options: { ...chartDefaults, plugins: { ...chartDefaults.plugins, tooltip: { callbacks: { label: ctx => ctx.parsed.y + ' kg' } } } }
+        });
+      }
+    }
+
+    // ── Modal ─────────────────────────────────────────────────────────────
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+    function openPwdModal() {
+      ['pwdCurrent','pwdNew','pwdConfirm'].forEach(id => document.getElementById(id).value = '');
+      openModal('pwdModal');
+    }
+
+    async function changePassword() {
+      const current = document.getElementById('pwdCurrent').value;
+      const newPwd = document.getElementById('pwdNew').value;
+      const confirm = document.getElementById('pwdConfirm').value;
+      if (!current || !newPwd) return showToast('Preencha todos os campos', 'error');
+      if (newPwd !== confirm) return showToast('As senhas não coincidem', 'error');
+      if (newPwd.length < 6) return showToast('Mínimo 6 caracteres', 'error');
+      try {
+        await api('PUT', '/me/password', { current, newPassword: newPwd });
+        showToast('Senha alterada com sucesso!');
+        closeModal('pwdModal');
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    function logout() { localStorage.clear(); window.location.href = '/'; }
+
+    let toastTimer;
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.className = 'toast ' + type;
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+    }
+
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+    });
+  </script>
+</body>
+</html>
